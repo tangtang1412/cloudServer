@@ -13,8 +13,9 @@ bool working(Socket& socketfd, int flag) {
     {
         //获取服务器文件目录
         case GETDIR:
-            //recFile(socketfd.getCfd());
-            scanfDir("./", name);
+            //scanfDir("./", name);
+            recursiveScanfDir(".", 2, name);
+            mySort2(name);
             sendDirectory(socketfd.getCfd(),name);
             break;
         //传送文件给Clint
@@ -40,7 +41,7 @@ bool sendFile(int& cfd) {
     int ret = 0;
     int size = 0;
     //读取client 需要的文件名称
-    size = read(cfd, buf, SIZE);
+    size = read(cfd, buf, 1024);
     cout << "read size :  " << size << endl;
     fileName = buf;
     cout << "fileName: "<< fileName << endl;
@@ -49,7 +50,7 @@ bool sendFile(int& cfd) {
     if(!inFile.is_open())
     {
         cout << "open inFile error." << endl;
-        send(cfd, "no123file", SIZE, 0); //告诉client 没有这个文件
+        send(cfd, "no123file", 1024, 0); //告诉client 没有这个文件
         return false;
     }
     //计算文件大小
@@ -58,7 +59,7 @@ bool sendFile(int& cfd) {
     inFile.seekg(0, ios::beg);
     //发送文件大小
     string temp = to_string(size);
-    send(cfd, temp.c_str(), SIZE, 0);
+    send(cfd, temp.c_str(), 1024, 0);
     cout << "send fileSize: " << temp << endl;
     int k = 0;
     while(!inFile.eof())
@@ -66,23 +67,36 @@ bool sendFile(int& cfd) {
         inFile.read(buf, sizeof(buf));
         //获取当前读指针位置
         int pos = inFile.tellg();
+//        cout << "pos1 : " << pos << endl;
+        //读到文件尾部
         if(pos == -1)
         {
-            pos = size - k;
+            pos = size - k; //最后一次读取读值大小
             ret = send(cfd, buf, pos, 0);
-            //cout << "ret : " << ret << endl;
-            //读到文件尾部
+//            cout << buf << endl;
+            if(ret == -1)
+            {
+                break;
+            }
+            cout << "ret-1  : " << ret << endl;
             break;
         }
-        pos -= k;
+        pos -= k; // 获取read读的大小
         k += pos;
+//        cout << "pos2: " << pos << endl;
         //cout << "buf:" << buf << endl;
+//        cout << buf << endl;
         ret = send(cfd, buf, pos, 0);
-        //cout << "ret : " << ret << endl;
+        if(ret == -1)
+        {
+            break;
+        }
+//        cout << "ret : " << ret << endl;
         memset(buf, 0, sizeof(buf));
     }
+
     inFile.close();
-    cout << "发送文件成功" << endl;
+    cout << fileName <<": 发送文件成功" << endl;
     return true;
 }
 
@@ -92,7 +106,7 @@ bool recFile(int &cfd) {
     int size;
     char buf[SIZE] = { 0 };
     //获取client 上传的文件名
-    int num = read(cfd, buf,SIZE);
+    int num = read(cfd, buf,1024);
     if(num == -1)
     {
         cout << "read error" << endl;
@@ -102,7 +116,8 @@ bool recFile(int &cfd) {
     fileName = buf;
     cout << "file name: " << fileName << endl;
     memset(buf, 0, sizeof(buf));
-    outFile.open(fileName,ios::out|ios::binary);
+    //保存文件到上级save目录
+    outFile.open("../save/"+fileName,ios::out|ios::binary);
     if(!outFile.is_open())
     {
         cout << "open file failed....." << endl;
@@ -126,16 +141,24 @@ bool recFile(int &cfd) {
         sizeTmp += num;
         if(fileSize == sizeTmp)
         {
-            //cout << "文件写已经写完" << endl;
+            cout << fileName <<":文件接收成功" << endl;
+//            cout << "文件写已经写完" << endl;
             break;
         }
         memset(buf, 0, sizeof(buf));
     }
+    char *bufTmp = "sendfileok";
+//    cout << bufTmp <<"size of" << sizeof(bufTmp) << endl;
+    size = send(cfd, bufTmp, 11, 0);
+    if(size == -1)
+    {
+        cout << "-1**************" << endl;
+    }
+    //cout << "size : "<< size << endl;
     outFile.close();
-    cout <<"文件接收成功" << endl;
     return true;
 }
-
+//发送文件夹
 bool sendDirectory(int& cfd, vector<string>& fileName) {
     int size;
     int num;
@@ -148,11 +171,19 @@ bool sendDirectory(int& cfd, vector<string>& fileName) {
 //        cout << "str len :" << str.length() << endl;
         //发送文件名称长度
         size = send(cfd, str.c_str(), sizeof(int), 0);
+        if(size == 0)
+        {
+            cout << "send dir lenth error" << endl;
+        }
 //        cout << "str.c_str() : " << str.c_str() << endl;
 //        cout <<"size= "<< size << endl;
 //        cout << "name: " << name << endl;
         //发送文件名
         size = send(cfd, name.c_str(), name.length(), 0);
+        if(size == 0)
+        {
+            cout << "send dir name error" << endl;
+        }
 //        cout << "name size:  " << size << endl;
     }
     num = strlen(tmp);
@@ -178,8 +209,7 @@ bool scanfDir(char *root, vector<string>& fileName) {
         return false;
     }
     struct dirent *fileDirent;
-    DIR *dir;
-    dir = opendir(root);
+    DIR *dir = opendir(root);
     if(dir == nullptr)
     {
         cout << "opendir error" << endl;
@@ -193,8 +223,102 @@ bool scanfDir(char *root, vector<string>& fileName) {
         }
         //char wholePath[1024] = { 0 };
         //sprintf(wholePath,"%s/%s", fileDirent->d_name)
-//        cout << fileDirent->d_name << endl;
+        //cout << fileDirent->d_name << endl;
         fileName.push_back(fileDirent->d_name);
+    }
+    return true;
+}
+
+bool recursiveScanfDir(const char *root, int depth, vector<string> &fileName) {
+    struct stat s;
+    stat(root, &s);
+    if(!S_ISDIR(s.st_mode))
+    {
+        cout << "root is not directory" << endl;
+        return false;
+    }
+    struct dirent *entry;
+    DIR *dir = opendir(root);
+    int num = 1;
+    while((entry= readdir(dir)) != nullptr)
+    {
+        if(strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+        {
+            continue;
+        }
+        char src[255] = { 0 };
+        strcpy(src, root);
+        strcat(src, "/");
+        strcat(src, entry->d_name);
+        struct stat statdir;
+        stat(src, &statdir);
+        if(statdir.st_mode & S_IFDIR)
+        {
+            string aa = "\"文件夹:\" ";
+            aa += src;
+            fileName.push_back(aa);
+            goto Later;
+        }
+        fileName.push_back(src);
+      Later:
+        if(statdir.st_mode & S_IFDIR)
+        {
+            num--;
+            if(num == 0)
+            {
+                depth--;
+            }
+            if(depth >= 1)
+            {
+                recursiveScanfDir(src, depth, fileName);
+            }
+        }
+    }
+    closedir(dir);
+    return true;
+}
+
+int mySort(string str)
+{
+    int number = 0;
+    int pos = str.find("/", 0);
+    while(pos != string::npos)
+    {
+        pos++;
+        pos = str.find("/", pos);
+        number++;
+    }
+    return number;
+}
+
+bool mySort2(vector<string> &fileName)
+{
+    vector<string> tmp;
+    vector<string> tmp2;
+    vector<string> tmp3;
+    tmp.swap(fileName); //交换
+    for(auto name:tmp)
+    {
+        int num = mySort(name);
+        if(num == 2)
+        {
+            tmp2.push_back(name);
+        }
+        if(num == 1)
+        {
+            tmp3.push_back(name);
+        }
+    }
+    sort(tmp3.begin(), tmp3.end());
+    sort(tmp2.begin(), tmp2.end());
+    fileName.push_back("=======================第一层=======================");
+    for(auto a:tmp3) {
+        fileName.push_back(a);
+    }
+    fileName.push_back("=======================第二层=======================");
+    for(auto a:tmp2)
+    {
+        fileName.push_back(a);
     }
     return true;
 }
