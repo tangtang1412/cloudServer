@@ -29,10 +29,14 @@ int main() {
                 close(socketfd.getSocketFd());
                 while(true)
                 {
-                    int ret = read(socketfd.getCfd(),&c_flag,sizeof(char));
+                    int ret = recv(socketfd.getCfd(),&c_flag,sizeof(char), 0);
                     if(ret <= 0)
                     {
                         //cout << "ret : " << ret << endl;
+                        if(errno == ETIMEDOUT)
+                        {
+                            cout << "ETIMEDOUT" << endl;
+                        }
                         break;
                     }
                     cout <<" flag : "<< c_flag << endl;

@@ -26,7 +26,7 @@ using namespace std;
 #define M_CLOSE 9
 #define DEPTH 3;
 
-#define SIZE 10240
+#define SIZE 20480
 
 bool working(Socket& socketfd,int flag);
 bool sendFile(int& cfd);
@@ -37,3 +37,4 @@ bool recursiveScanfDir(const char *root, int depth, vector<string>& fileName); /
 int mySort(string str); //目录层级分类
 bool mySort2(vector<string>& fileName);   //目录层级分类
 void getCurrentTime();  //获取当前时间
+bool setSockBufSize(Socket& socketfd, int flag);

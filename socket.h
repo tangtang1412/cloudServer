@@ -12,6 +12,10 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <string.h>
+#include <netinet/tcp.h>
+#include <netinet/in.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 
 using namespace std;
@@ -26,6 +30,12 @@ private:
     struct sockaddr_in sockaddr_Clinet;
     struct sockaddr_in sockaddr_Server;
     char ipbuf[16];
+
+    int keepAlive = 1; // 开启keepalive属性
+    int keepIdle = 60; // 如该连接在60秒内没有任何数据往来,则进行探测
+    int keepInterval = 5; // 探测时发包的时间间隔为5 秒
+    int keepCount = 3; // 探测尝试的次数.如果第1次探测包就收到响应了,则后2次的不再发.
+
 public:
     int m_port;
 

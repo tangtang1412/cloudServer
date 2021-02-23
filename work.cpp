@@ -9,24 +9,31 @@
 
 bool working(Socket& socketfd, int flag) {
     vector<string> name;
+    int depth = DEPTH;
+    int m_time[64] = { 0 };
+
     switch(flag)
     {
         //获取服务器文件目录
         case GETDIR:
             //scanfDir("./", name);
-            recursiveScanfDir(".", 2, name);
+            getCurrentTime();
+            recursiveScanfDir(".", depth, name);
             mySort2(name);
             sendDirectory(socketfd.getCfd(),name);
             break;
         //传送文件给Clint
         case SENDFILE:
+            getCurrentTime();
             sendFile(socketfd.getCfd());
             break;
         //接受client文件
         case RECFILE:
+            getCurrentTime();
             recFile(socketfd.getCfd());
             break;
         default :
+            getCurrentTime();
             cout << "unknow" << endl;
             return false;
     }
@@ -294,8 +301,10 @@ int mySort(string str)
 bool mySort2(vector<string> &fileName)
 {
     vector<string> tmp;
+    vector<string> tmp1;
     vector<string> tmp2;
     vector<string> tmp3;
+    vector<string> tmp4;
     tmp.swap(fileName); //交换
     for(auto name:tmp)
     {
@@ -306,20 +315,58 @@ bool mySort2(vector<string> &fileName)
         }
         if(num == 1)
         {
+            tmp1.push_back(name);
+        }
+        if(num == 3)
+        {
             tmp3.push_back(name);
         }
     }
+    sort(tmp1.begin(), tmp1.end());
     sort(tmp3.begin(), tmp3.end());
     sort(tmp2.begin(), tmp2.end());
-    fileName.push_back("=======================第一层=======================");
-    for(auto a:tmp3) {
+    tmp1.insert(tmp1.begin(),"=======================第一层=======================");
+    tmp2.insert(tmp2.begin(),"=======================第二层=======================");
+    //tmp3.insert(tmp3.begin(),"=======================第三层=======================");
+    tmp4.push_back("=======================第三层=======================");
+    for(auto a:tmp1) {
         fileName.push_back(a);
     }
-    fileName.push_back("=======================第二层=======================");
-    for(auto a:tmp2)
+    for(auto a:tmp2){
+        fileName.push_back(a);
+    }
+    for(auto a2: tmp2)
     {
+        int pos = a2.find(" ");
+        //cout << "pos:" << pos << endl;
+        if(pos != -1)
+        {
+            pos = a2.rfind("/");
+            string mstr = "*******************************文件夹:" + a2.substr(pos+1, a2.length()) + "内容*******************************";
+            tmp4.push_back(mstr);
+            //cout << "------------" << a2 << "-----------" << endl;
+            for(auto a3:tmp3)
+            {
+                int mpos = a3.find(a2.substr(pos+1, a2.length()));
+                if(mpos != -1){
+                    tmp4.push_back(a3);
+                    //cout << a3 << endl;
+                }else{
+                    //cout << "这个" << a2 << "为空" << endl;
+                }
+            }
+        }
+    }
+    for(auto a:tmp4){
         fileName.push_back(a);
     }
     return true;
 }
 
+void getCurrentTime()
+{
+    time_t t = time(nullptr);
+    char buf[64] = { 0 };
+    strftime(buf, sizeof(buf) - 1, "%Y-%m-%d %H:%M:%S", localtime(&t));
+    cout << buf << endl;
+}

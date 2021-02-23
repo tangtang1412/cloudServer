@@ -64,13 +64,20 @@ bool Socket::myAccept() {
     memset(&sockaddr_Clinet, 0, sizeof(sockaddr_Clinet));
     int clientLength = sizeof(sockaddr_Clinet);
     m_cfd = ::accept(m_socketFd, (struct sockaddr*)&sockaddr_Clinet,(socklen_t *)&clientLength);
+
+
+    setsockopt(m_cfd, SOL_SOCKET, SO_KEEPALIVE, (void*)&keepAlive, sizeof(keepAlive));
+//    setsockopt(m_cfd, IPPROTO_TCP, TCP_KEEPALIVE, (void*)&keepIdle, sizeof(keepIdle));
+//    setsockopt(m_cfd, IPPROTO_TCP, TCP_KEEPINTVL, (void*)&keepInterval, sizeof(keepInterval));
+//    setsockopt(m_cfd, IPPROTO_TCP, TCP_KEEPCNT, (void*)&keepCount, sizeof(keepCount));
     if(m_cfd == -1)
     {
-        if(errno == EINTR)
+        if(errno == EINTR || errno == EBADF)
         {
-            cout << "EINTR" << endl;
+            cout << "EINTR|EBADF" << errno << endl;
             return false;
         }
+        cout << errno << endl;
         cout << "accept error " << endl;
         throw "accept";
     }

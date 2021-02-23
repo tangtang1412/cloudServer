@@ -6,25 +6,9 @@
 
 #IncludeRegexTransform: 
 
-/Users/tangtang/CLionProjects/cloudServer/main.cpp
-iostream
--
-ptread.h
-/Users/tangtang/CLionProjects/cloudServer/ptread.h
-work.h
-/Users/tangtang/CLionProjects/cloudServer/work.h
-vector
--
-
-/Users/tangtang/CLionProjects/cloudServer/ptread.h
-unistd.h
--
-sys/wait.h
--
-iostream
--
-signal.h
--
+/Users/tangtang/CLionProjects/cloudServer/socket.cpp
+socket.h
+/Users/tangtang/CLionProjects/cloudServer/socket.h
 
 /Users/tangtang/CLionProjects/cloudServer/socket.h
 iostream
@@ -37,32 +21,12 @@ pthread.h
 -
 string.h
 -
-
-/Users/tangtang/CLionProjects/cloudServer/work.cpp
-work.h
-/Users/tangtang/CLionProjects/cloudServer/work.h
-vector
+netinet/tcp.h
 -
-sys/stat.h
--
-dirent.h
--
-
-/Users/tangtang/CLionProjects/cloudServer/work.h
-iostream
--
-fstream
--
-unistd.h
+netinet/in.h
 -
 sys/types.h
 -
 sys/socket.h
--
-socket.h
-/Users/tangtang/CLionProjects/cloudServer/socket.h
-vector
--
-algorithm
 -
 
