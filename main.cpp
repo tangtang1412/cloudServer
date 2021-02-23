@@ -51,6 +51,7 @@ int main() {
                         break;
                     }
                 }
+                close(socketfd.getCfd());
                 exit(0);
             }
             else if(processId > 0)

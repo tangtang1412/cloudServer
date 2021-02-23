@@ -6,6 +6,26 @@
 
 #IncludeRegexTransform: 
 
+/Users/tangtang/CLionProjects/cloudServer/main.cpp
+iostream
+-
+ptread.h
+/Users/tangtang/CLionProjects/cloudServer/ptread.h
+work.h
+/Users/tangtang/CLionProjects/cloudServer/work.h
+vector
+-
+
+/Users/tangtang/CLionProjects/cloudServer/ptread.h
+unistd.h
+-
+sys/wait.h
+-
+iostream
+-
+signal.h
+-
+
 /Users/tangtang/CLionProjects/cloudServer/socket.h
 iostream
 -
